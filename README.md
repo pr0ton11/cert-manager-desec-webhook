@@ -21,6 +21,11 @@ helm install desec-webhook -n cert-manager deploy
 ```
 ### Using public helm chart
 
+```bash
+helm repo add cert-manager-desec-webhook https://pr0ton11.github.io/cert-manager-desec-webhook/
+helm install cert-manager-desec-webhook/desec-webhook -n cert-manager deploy
+
+```
 
 ## Uninstallation
 
