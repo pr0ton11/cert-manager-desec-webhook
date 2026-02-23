@@ -1,5 +1,10 @@
 groupName: acme.pr0ton11.github.com
 
+# Update the name of the secret in which the deSEC API token is stored here. 
+# The secret must be in the same namespace as cert-manager.
+secretName:
+  - desec-token
+
 certManager:
   namespace: cert-manager
   serviceAccountName: cert-manager

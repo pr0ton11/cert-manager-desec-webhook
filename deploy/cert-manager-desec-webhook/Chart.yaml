@@ -2,4 +2,4 @@ apiVersion: v1
 appVersion: "1.0"
 description: An independently maintained deSEC DNS validation webhook for cert-manager 
 name: cert-manager-desec-webhook
-version: 0.1.0
+version: 0.1.1
