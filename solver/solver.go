@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2"
 )
 
 // Configuration for the DeSEC DNS-01 challenge solver
@@ -61,6 +62,7 @@ func (s *DeSECDNSProviderSolver) getClient(config *apiextensionsv1.JSON, namespa
 	}
 	// Finally assign the client
 	client := desec.New(string(token), desec.NewDefaultClientOptions())
+	klog.InfoS("deSEC client configured", "component", "desec-solver", "event", "client_ready", "namespace", namespace, "secretName", solverConfig.APIKeySecretRef.Name, "secretKey", solverConfig.APIKeySecretRef.Key)
 
 	// Return the client (reuse if initialized)
 	return client, nil
@@ -95,6 +97,7 @@ func (s *DeSECDNSProviderSolver) Present(req *acme.ChallengeRequest) error {
 	if err != nil {
 		return fmt.Errorf("DNS record %s creation failed: %w", fqdn, err)
 	}
+	klog.InfoS("DNS record created", "component", "desec-solver", "event", "record_presented", "namespace", req.ResourceNamespace, "zone", zone, "fqdn", fqdn, "subdomain", subdomain, "ttl", recordSet.TTL)
 	// Return no error
 	return nil
 }
@@ -120,6 +123,7 @@ func (s *DeSECDNSProviderSolver) CleanUp(req *acme.ChallengeRequest) error {
 	if err != nil {
 		return fmt.Errorf("DNS record %s deletion failed: %w", fqdn, err)
 	}
+	klog.InfoS("DNS record deleted", "component", "desec-solver", "event", "record_deleted", "namespace", req.ResourceNamespace, "zone", zone, "fqdn", fqdn, "subdomain", subdomain)
 	// Return no error
 	return nil
 }
@@ -133,6 +137,7 @@ func (s *DeSECDNSProviderSolver) Initialize(kubeClientConfig *rest.Config, stopC
 	}
 	// Assign the k8s client to the solver
 	s.k8s = k8s
+	klog.InfoS("solver initialized", "component", "desec-solver", "event", "initialized")
 	// Return no error
 	return nil
 }
