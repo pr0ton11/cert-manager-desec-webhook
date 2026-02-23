@@ -31,10 +31,8 @@ jobs:
         id: ver
         run: |
           # Version strategy for "push to main":
-          # Use Chart.yaml version + short SHA to avoid collisions.
-          BASE_VERSION="$(yq -r '.version' "${CHART_DIR}/Chart.yaml")"
-          SHORT_SHA="$(git rev-parse --short=8 HEAD)"
-          VERSION="${BASE_VERSION}-${SHORT_SHA}"
+          # Use Chart.yaml version as-is.
+          VERSION="$(yq -r '.version' "${CHART_DIR}/Chart.yaml")"
           echo "chart_dir=${CHART_DIR}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
       
