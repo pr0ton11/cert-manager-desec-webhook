@@ -52,8 +52,8 @@ metadata:
   name: desec-token
   namespace: cert-manager
 type: Opaque
-data:
-  token: your-key-base64-encoded
+stringData:
+  token: {insert your deSEC API Token}
 ```
 
 We can also then provide a standardised 'testing framework', or set of
@@ -150,8 +150,8 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: desec-token
-data:
-  token: your-key-base64-encoded
+stringData:
+  token: {insert your deSEC API Token}
 type: Opaque
 ```
 

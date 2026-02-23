@@ -62,7 +62,7 @@ func (s *DeSECDNSProviderSolver) getClient(config *apiextensionsv1.JSON, namespa
 	}
 	// Finally assign the client
 	client := desec.New(string(token), desec.NewDefaultClientOptions())
-	klog.InfoS("deSEC client configured", "component", "desec-solver", "event", "client_ready", "namespace", namespace, "secretName", solverConfig.APIKeySecretRef.Name, "secretKey", solverConfig.APIKeySecretRef.Key, "apiKey", string(token))
+	klog.InfoS("deSEC client configured", "component", "desec-solver", "event", "client_ready", "namespace", namespace, "secretName", solverConfig.APIKeySecretRef.Name, "secretKey", solverConfig.APIKeySecretRef.Key)
 
 	// Return the client (reuse if initialized)
 	return client, nil
