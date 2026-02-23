@@ -49,7 +49,7 @@ Create a secret containing the credentials
 apiVersion: v1
 kind: Secret
 metadata:
-  name: desec-io-token
+  name: desec-token
   namespace: cert-manager
 type: Opaque
 data:
@@ -80,7 +80,7 @@ spec:
             config:
               apiKeySecretRef:
                 key: token
-                name: desec-io-token
+                name: desec-token
             groupName: acme.pr0ton11.github.com
             solverName: desec
 ```
