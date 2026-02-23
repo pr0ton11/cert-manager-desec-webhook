@@ -101,11 +101,12 @@ rules:
     resources:
       - "secrets"
     {{- with .Values.secretName }}
-    resourceNames: {{- toYaml . | nindent 4 }}
+    resourceNames:
+{{- toYaml . | nindent 6 }}
     {{- end }}
-        verbs:
-          - "get"
-          - "watch"
+    verbs:
+      - "get"
+      - "watch"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
