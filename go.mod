@@ -8,6 +8,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.34.4
 	k8s.io/apimachinery v0.34.4
 	k8s.io/client-go v0.34.4
+	k8s.io/klog/v2 v2.130.1
 )
 
 require (
@@ -103,7 +104,6 @@ require (
 	k8s.io/api v0.34.4 // indirect
 	k8s.io/apiserver v0.34.4 // indirect
 	k8s.io/component-base v0.34.4 // indirect
-	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kms v0.34.4 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
 	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d // indirect
