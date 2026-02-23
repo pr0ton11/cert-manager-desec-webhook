@@ -78,7 +78,7 @@ func (s *DeSECDNSProviderSolver) Present(req *acme.ChallengeRequest) error {
 	zone := util.UnFqdn(req.ResolvedZone)
 	fqdn := util.UnFqdn(req.ResolvedFQDN)
 	// Cut the zone from the fqdn to retrieve the subdomain
-	subdomain := util.UnFqdn(strings.Replace(fqdn, zone, "", 0))
+	subdomain := util.UnFqdn(strings.Replace(fqdn, zone, "", 1))
 	// Check if zone is managed in deSEC
 	domain, err := apiClient.Domains.Get(context.Background(), zone)
 	if err != nil {
@@ -112,7 +112,7 @@ func (s *DeSECDNSProviderSolver) CleanUp(req *acme.ChallengeRequest) error {
 	zone := util.UnFqdn(req.ResolvedZone)
 	fqdn := util.UnFqdn(req.ResolvedFQDN)
 	// Cut the zone from the fqdn to retrieve the subdomain
-	subdomain := util.UnFqdn(strings.Replace(fqdn, zone, "", 0))
+	subdomain := util.UnFqdn(strings.Replace(fqdn, zone, "", 1))
 	// Check if zone is managed in deSEC
 	domain, err := apiClient.Domains.Get(context.Background(), zone)
 	if err != nil {
