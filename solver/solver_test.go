@@ -1,6 +1,7 @@
-package solver_test
+package solver
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -50,5 +51,62 @@ func TestPresentSubdomainFromFQDN(t *testing.T) {
 				t.Fatalf("unexpected subdomain: got %q want %q", subdomain, test.expected)
 			}
 		})
+	}
+}
+
+func TestAppendMissingRecords(t *testing.T) {
+	t.Parallel()
+
+	existing := []string{`"token-a"`, `"token-b"`}
+	records, changed := appendMissingRecords(existing, []string{`"token-b"`, `"token-c"`})
+
+	if !changed {
+		t.Fatal("expected records to change")
+	}
+	if !slices.Equal(records, []string{`"token-a"`, `"token-b"`, `"token-c"`}) {
+		t.Fatalf("unexpected records: got %v", records)
+	}
+	if !slices.Equal(existing, []string{`"token-a"`, `"token-b"`}) {
+		t.Fatalf("existing records were mutated: got %v", existing)
+	}
+}
+
+func TestAppendMissingRecordsNoChange(t *testing.T) {
+	t.Parallel()
+
+	records, changed := appendMissingRecords([]string{`"token-a"`}, []string{`"token-a"`})
+
+	if changed {
+		t.Fatal("expected records to be unchanged")
+	}
+	if !slices.Equal(records, []string{`"token-a"`}) {
+		t.Fatalf("unexpected records: got %v", records)
+	}
+}
+
+func TestRemoveRecord(t *testing.T) {
+	t.Parallel()
+
+	existing := []string{`"token-a"`, `"token-b"`, `"token-c"`}
+	records, changed := removeRecord(existing, `"token-b"`)
+
+	if !changed {
+		t.Fatal("expected records to change")
+	}
+	if !slices.Equal(records, []string{`"token-a"`, `"token-c"`}) {
+		t.Fatalf("unexpected records: got %v", records)
+	}
+}
+
+func TestRemoveRecordNoChange(t *testing.T) {
+	t.Parallel()
+
+	records, changed := removeRecord([]string{`"token-a"`}, `"token-b"`)
+
+	if changed {
+		t.Fatal("expected records to be unchanged")
+	}
+	if !slices.Equal(records, []string{`"token-a"`}) {
+		t.Fatalf("unexpected records: got %v", records)
 	}
 }

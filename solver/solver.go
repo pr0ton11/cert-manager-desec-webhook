@@ -3,6 +3,7 @@ package solver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -16,6 +17,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 )
+
+const txtRecordType = "TXT"
 
 // Configuration for the DeSEC DNS-01 challenge solver
 type DeSECDNSProviderSolverConfig struct {
@@ -84,20 +87,18 @@ func (s *DeSECDNSProviderSolver) Present(req *acme.ChallengeRequest) error {
 	if err != nil {
 		return fmt.Errorf("domain %s could not be retrieved from deSEC API: %w", zone, err)
 	}
-	// Create the TXT record to be created
 	recordSet := desec.RRSet{
 		Domain:  domain.Name,
 		SubName: subdomain,
 		Records: []string{fmt.Sprintf("\"%s\"", req.Key)},
-		Type:    "TXT",
+		Type:    txtRecordType,
 		TTL:     3600,
 	}
-	// Create the TXT record
-	_, err = apiClient.Records.Create(context.Background(), recordSet)
-	if err != nil {
-		return fmt.Errorf("DNS record %s creation failed: %w", fqdn, err)
+
+	if err := upsertTXTRecord(context.Background(), apiClient, recordSet); err != nil {
+		return fmt.Errorf("DNS record %s presentation failed: %w", fqdn, err)
 	}
-	klog.InfoS("DNS record created", "component", "desec-solver", "event", "record_presented", "namespace", req.ResourceNamespace, "zone", zone, "fqdn", fqdn, "subdomain", subdomain, "ttl", recordSet.TTL)
+	klog.InfoS("DNS record presented", "component", "desec-solver", "event", "record_presented", "namespace", req.ResourceNamespace, "zone", zone, "fqdn", fqdn, "subdomain", subdomain, "ttl", recordSet.TTL)
 	// Return no error
 	return nil
 }
@@ -118,14 +119,116 @@ func (s *DeSECDNSProviderSolver) CleanUp(req *acme.ChallengeRequest) error {
 	if err != nil {
 		return fmt.Errorf("domain %s could not be retrieved from deSEC API: %w", zone, err)
 	}
-	// Delete the TXT record
-	err = apiClient.Records.Delete(context.Background(), domain.Name, subdomain, "TXT")
-	if err != nil {
-		return fmt.Errorf("DNS record %s deletion failed: %w", fqdn, err)
+	record := fmt.Sprintf("\"%s\"", req.Key)
+	if err := removeTXTRecord(context.Background(), apiClient, domain.Name, subdomain, record); err != nil {
+		return fmt.Errorf("DNS record %s cleanup failed: %w", fqdn, err)
 	}
-	klog.InfoS("DNS record deleted", "component", "desec-solver", "event", "record_deleted", "namespace", req.ResourceNamespace, "zone", zone, "fqdn", fqdn, "subdomain", subdomain)
+	klog.InfoS("DNS record cleaned up", "component", "desec-solver", "event", "record_deleted", "namespace", req.ResourceNamespace, "zone", zone, "fqdn", fqdn, "subdomain", subdomain)
 	// Return no error
 	return nil
+}
+
+func upsertTXTRecord(ctx context.Context, apiClient *desec.Client, recordSet desec.RRSet) error {
+	existing, err := apiClient.Records.Get(ctx, recordSet.Domain, recordSet.SubName, txtRecordType)
+	if isNotFound(err) {
+		_, err = apiClient.Records.Create(ctx, recordSet)
+		if err == nil {
+			return nil
+		}
+		if !isAlreadyExists(err) {
+			return fmt.Errorf("create TXT RRset failed: %w", err)
+		}
+
+		existing, err = apiClient.Records.Get(ctx, recordSet.Domain, recordSet.SubName, txtRecordType)
+	}
+	if err != nil {
+		return fmt.Errorf("get TXT RRset failed: %w", err)
+	}
+
+	records, changed := appendMissingRecords(existing.Records, recordSet.Records)
+	if !changed {
+		return nil
+	}
+
+	_, err = apiClient.Records.Update(ctx, recordSet.Domain, recordSet.SubName, txtRecordType, desec.RRSet{
+		Records: records,
+		TTL:     recordSet.TTL,
+	})
+	if err != nil {
+		return fmt.Errorf("update TXT RRset failed: %w", err)
+	}
+
+	return nil
+}
+
+func removeTXTRecord(ctx context.Context, apiClient *desec.Client, domain, subdomain, record string) error {
+	existing, err := apiClient.Records.Get(ctx, domain, subdomain, txtRecordType)
+	if isNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("get TXT RRset failed: %w", err)
+	}
+
+	records, changed := removeRecord(existing.Records, record)
+	if !changed {
+		return nil
+	}
+
+	_, err = apiClient.Records.Update(ctx, domain, subdomain, txtRecordType, desec.RRSet{
+		Records: records,
+		TTL:     existing.TTL,
+	})
+	if err != nil {
+		return fmt.Errorf("update TXT RRset failed: %w", err)
+	}
+
+	return nil
+}
+
+func appendMissingRecords(existing, additions []string) ([]string, bool) {
+	records := append([]string(nil), existing...)
+	seen := make(map[string]struct{}, len(existing))
+	for _, record := range existing {
+		seen[record] = struct{}{}
+	}
+
+	changed := false
+	for _, record := range additions {
+		if _, ok := seen[record]; ok {
+			continue
+		}
+		records = append(records, record)
+		seen[record] = struct{}{}
+		changed = true
+	}
+
+	return records, changed
+}
+
+func removeRecord(existing []string, removed string) ([]string, bool) {
+	records := make([]string, 0, len(existing))
+	changed := false
+
+	for _, record := range existing {
+		if record == removed {
+			changed = true
+			continue
+		}
+		records = append(records, record)
+	}
+
+	return records, changed
+}
+
+func isNotFound(err error) bool {
+	var notFound *desec.NotFoundError
+	return errors.As(err, &notFound)
+}
+
+func isAlreadyExists(err error) bool {
+	var apiError *desec.APIError
+	return errors.As(err, &apiError) && apiError.StatusCode == 400 && strings.Contains(err.Error(), "Another RRset with the same subdomain and type exists")
 }
 
 // Initializes the solver
