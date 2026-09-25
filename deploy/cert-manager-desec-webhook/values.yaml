@@ -38,3 +38,26 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# -- Pod-level security context. Defaults to a non-root setup matching the
+# image (which runs as uid/gid 65532). Set to null to omit the block.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container-level security context. Set to null to omit the block.
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+# -- Extra volumes for the deployment (e.g. a writable /tmp emptyDir when
+# running with a read-only root filesystem). Set to null to omit.
+extraVolumes: []
+
+# -- Extra volume mounts for the webhook container. Set to null to omit.
+extraVolumeMounts: []
