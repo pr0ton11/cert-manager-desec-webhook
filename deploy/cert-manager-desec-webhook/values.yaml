@@ -11,8 +11,9 @@ certManager:
 
 image:
   repository: ghcr.io/pr0ton11/cert-manager-desec-webhook
-  tag: latest
-  pullPolicy: Always
+  # -- Image tag. Defaults to the chart appVersion when empty.
+  tag: ""
+  pullPolicy: IfNotPresent
 
 nameOverride: ""
 fullnameOverride: ""

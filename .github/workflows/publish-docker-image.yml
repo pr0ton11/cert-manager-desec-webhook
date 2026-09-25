@@ -8,6 +8,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
 
 jobs:
   build:
@@ -30,6 +32,8 @@ jobs:
             ghcr.io/pr0ton11/cert-manager-desec-webhook
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
           labels: |
             maintainer=proton11@github.com
             org.opencontainers.image.title=cert-manager-deSEC-webhook
