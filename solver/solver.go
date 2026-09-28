@@ -151,6 +151,7 @@ func upsertTXTRecord(ctx context.Context, apiClient *desec.Client, recordSet des
 	}
 
 	_, err = apiClient.Records.Update(ctx, recordSet.Domain, recordSet.SubName, txtRecordType, desec.RRSet{
+		SubName: recordSet.SubName,
 		Records: records,
 		TTL:     recordSet.TTL,
 	})
@@ -176,6 +177,7 @@ func removeTXTRecord(ctx context.Context, apiClient *desec.Client, domain, subdo
 	}
 
 	_, err = apiClient.Records.Update(ctx, domain, subdomain, txtRecordType, desec.RRSet{
+		SubName: subdomain,
 		Records: records,
 		TTL:     existing.TTL,
 	})
