@@ -1,12 +1,17 @@
-FROM golang:1.27.1-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.27.1-alpine AS build
 
 WORKDIR /workspace
 
-COPY . .
+COPY go.mod go.sum ./
 
 RUN go mod download
 
-RUN CGO_ENABLED=0 go build -o webhook .
+COPY . .
+
+ARG TARGETOS
+ARG TARGETARCH
+
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o webhook .
 
 FROM gcr.io/distroless/static-debian13
 
